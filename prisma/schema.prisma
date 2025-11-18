@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -8,11 +9,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Auth {
-  id         String  @id
-  email      String  @unique
-  password   String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now())
+  id        String   @id
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }

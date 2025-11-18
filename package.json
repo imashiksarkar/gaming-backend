@@ -7,11 +7,11 @@
   "scripts": {
     "start": "node --env-file=.env dist/server.js",
     "dev": "tsx watch --env-file=.env.dev src/server.ts",
-    "prebuild": "prisma generate",
+    "prebuild": "pnpm run db:generate",
     "build": "rm -rf dist && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json && tsc-esm-fix dist",
     "db:migrate": "prisma migrate dev",
     "db:migrate:create": "prisma migrate dev --create-only --skip-generate",
-    "db:generate": "prisma generate",
+    "db:generate": "prisma generate --no-engine",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
