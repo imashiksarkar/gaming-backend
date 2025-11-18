@@ -1,0 +1,76 @@
+#!/usr/bin/python3
+
+from fabric import Connection
+import io
+import paramiko
+import requests
+import time
+
+
+def health_check():
+    result = requests.get(f"http://{host}:5003/health")
+
+    if result.status_code != 200:
+        print("❌ Health check failed.")
+    else:
+        print("✔ Health check passed.")
+
+
+def nvm_run(c, cmd):
+    return c.run(f"bash -ic '{cmd}'", pty=True)
+
+
+def deploy():
+    private_key_obj = paramiko.Ed25519Key.from_private_key(io.StringIO(private_key))
+
+    with Connection(
+        host=host, user=username, connect_kwargs={"pkey": private_key_obj}
+    ) as c:
+        with c.cd(location):
+            print("# Stashing changes...")
+            nvm_run(c, "git stash")
+
+            print("# Pulling latest code...")
+            r = nvm_run(c, "git pull origin main")
+            if "up to date" in r.stdout:
+                print("✔ Repo already up to date, skipping deploy.")
+                return
+
+            print("# Installing dependencies...")
+            nvm_run(c, "pnpm i")
+
+            print("# Updating .env file...")
+            nvm_run(c, "rm -f .env && mv .env.vps2 .env")
+
+            print("# Migrating database...")
+            nvm_run(c, "pnpm run db:deploy")
+
+            print("# Building project...")
+            nvm_run(c, "pnpm run build")
+
+            print("# Reloading pm2...")
+            nvm_run(c, f"pm2 reload {pm2_deployment_name} --update-env")
+
+            print("# Streaming logs...")
+            nvm_run(c, f"pm2 logs {pm2_deployment_name} --nostream --lines 10 --out")
+
+
+if __name__ == "__main__":
+    username = "root"
+    host = "206.162.244.131"
+
+    private_key = """-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACAR/2l5Qyl23eROBUtBluDIlzvDm2wmxSFV6XYETYaixgAAAJhxVvswcVb7
+MAAAAAtzc2gtZWQyNTUxOQAAACAR/2l5Qyl23eROBUtBluDIlzvDm2wmxSFV6XYETYaixg
+AAAEAJOYnpSE00oZAhxhE3DXODh0bsVltjEiPL2kkdCG2FhBH/aXlDKXbd5E4FS0GW4MiX
+O8ObbCbFIVXpdgRNhqLGAAAAFGFzaGlrIGRlcGxveW1lbnQga2V5AQ==
+-----END OPENSSH PRIVATE KEY-----"""
+
+    location = "/root/ashik/julienteissandi-backend"
+    pm2_deployment_name = "julienteissandi-backend"
+
+    deploy()
+
+    time.sleep(2)  # wait for 2 seconds
+    health_check()
