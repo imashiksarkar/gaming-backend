@@ -17,13 +17,16 @@
     "db:reset": "prisma migrate reset --force",
     "deploy": "./deploy"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "gaming",
+    "oRPC",
+    "RPC"
+  ],
+  "author": "Ashik Sarkar <ashiksarkar.s18@gmail.com>",
   "license": "ISC",
   "packageManager": "pnpm@10.22.0",
   "dependencies": {
     "@prisma/client": "^6.19.0",
-    "@trpc/server": "^11.7.1",
     "express": "^5.1.0",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
